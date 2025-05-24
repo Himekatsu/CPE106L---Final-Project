@@ -1,4 +1,6 @@
 # CPE106L-Group-1
 CPE106L-4-E02
 
-// baliw ako
+// hello we are unit 1, 2, 3
+
+// bye
