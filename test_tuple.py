@@ -1,4 +1,7 @@
-myTuple = tuple()
+vals = [3, 60, 1,  4, 6]
 
-print (myTuple())
+myTuple = tuple(vals)
 
+print(len(myTuple))
+
+print(myTuple.count(10))
