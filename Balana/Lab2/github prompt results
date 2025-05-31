@@ -1,0 +1,47 @@
+# To create a Python program that allows users to navigate the lines of a text file, follow these steps:
+
+# 1. **Prompt the user for a file name** and open the file.
+# 2. **Read all lines** from the file into a list.
+# 3. **Display one line at a time** and provide options to go to the next, previous, or a specific line.
+# 4. **Loop** until the user chooses to exit.
+
+# Here’s a simple outline to get you started:
+
+# python
+
+filename = input("Enter the filename: ")
+try:
+    with open(filename, 'r') as file:
+        lines = file.readlines()
+except FileNotFoundError:
+    print("File not found.")
+    exit()
+
+current = 0
+while True:
+    print(f"\nLine {current + 1}: {lines[current].rstrip()}")
+    print("Options: [N]ext, [P]revious, [G]o to line, [Q]uit")
+    choice = input("Choose an option: ").strip().lower()
+
+    if choice == 'n':
+        if current < len(lines) - 1:
+            current += 1
+        else:
+            print("Already at the last line.")
+    elif choice == 'p':
+        if current > 0:
+            current -= 1
+        else:
+            print("Already at the first line.")
+    elif choice == 'g':
+        line_num = int(input("Enter line number: ")) - 1
+        if 0 <= line_num < len(lines):
+            current = line_num
+        else:
+            print("Invalid line number.")
+    elif choice == 'q':
+        break
+    else:
+        print("Invalid option.")
+
+# You can expand this with error handling and more features as needed.
