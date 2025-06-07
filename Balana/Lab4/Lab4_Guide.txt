@@ -1,0 +1,65 @@
+Lab 4: Lab 4: Design Patterns and Unit Testing
+
+****** PRELAB ******
+1. Tools and Data Files: 
+    * UMLet: https://www.umlet.com/changes.htm (Windows app)
+    * Linux in Hadoop VM (optional but can  be used in lieu of Anaconda)
+    * Anaconda terminal
+    * Visual Studio Code    
+    * Lab 4 Pertinent Files: https://mymailmapuaedu-my.sharepoint.com/:f:/g/personal/dapadilla_mapua_edu_ph/EjngSvQiVrVJv5rVByKaHYABBEM5JwHm2G9-qeoovM7CQA?e=TKOU7z
+
+2. Readings:
+    METIS #1: 
+    Python Projects
+    Laura Cassell, Alan Gauld
+    Edition 1
+    ISBN: 9781118909195 (new)
+    9781118908891 (old)
+    Wiley Professional Development (P&T)
+
+    *** Chapter 4: Building Desktop Applications ****
+    - MVC Pattern - page 221 (new ISBN)
+
+        * OLD Edition
+        * Tic Tac Toe (Console App), pp. 162 to 173
+        * Tic Tac Toe (GUI App), pp. 186 to 193
+    ===========================================================
+
+    METIS #2:  
+    Testing Python
+    Sale, D. (2014). Testing Python. Wiley Professional, Reference & Trade (Wiley K&L). https://bookshelf.vitalsource.com/books/9781118901243
+    
+    ===================================================
+    Professional Python (NOT AVAILABLE IN METIS)
+    Luke Sneeringer
+    Edition 1
+    ISBN: 9781119070832
+    Wiley Professional Development (P&T)
+    - Unit Testing, (Chap 11)  
+
+2. Questions
+    None
+
+Others:
+    * https://docs.python.org/3/library/unittest.html
+    * https://refactoring.guru/design-patterns/structural-patterns    
+
+****** INLAB *******
+Refer to Pertinent File's Source Codes
+- Tic Tac Toe Console App and GUI
+- Unit Testing (refer to the Unit Testing Handout MS Word file)
+
+
+****** POSTLAB *******
+Same as INLAB but using your own program of the below problems:
+1. Convert the oxo‐logic.py module to reflect OOP design by creating a Game class. 
+2. Explore the Tkinter.filedialog module to get the name of a text file 
+3. Create a unit test program for testing  the Tic Tac Toe Console App
+
+Note: 
+1. Dont change the original filename. Source codes to Projects solutions should be inside their 
+   respective folder (e.g. postlab_problem 1)
+2. Provide OneDrive link to these PostLab Projects Source codes (.py) and other files
+3. (optional) Provide the github repository link
+
+
