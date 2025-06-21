@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?><sqlb_project><db path="/home/vboxuser/LocalRepo/CPE106L-Group-1/Lab 5/SQLSERVERCOLONIAL" readonly="0" foreign_keys="1" case_sensitive_like="0" temp_store="0" wal_autocheckpoint="1000" synchronous="2"/><attached/><window><main_tabs open="structure browser pragmas query" current="3"/></window><tab_structure><column_width id="0" width="300"/><column_width id="1" width="0"/><column_width id="2" width="100"/><column_width id="3" width="1732"/><column_width id="4" width="0"/><expanded_item id="0" parent="1"/><expanded_item id="1" parent="1"/><expanded_item id="2" parent="1"/><expanded_item id="3" parent="1"/></tab_structure><tab_browse><current_table name="4,10:mainCategories"/><default_encoding codec=""/><browse_table_settings><table schema="main" name="Categories" show_row_id="0" encoding="" plot_x_axis="" unlock_view_pk="_rowid_"><sort/><column_widths><column index="1" value="87"/><column index="2" value="113"/></column_widths><filter_values/><conditional_formats/><row_id_formats/><display_formats/><hidden_columns/><plot_y_axes/><global_filter/></table></browse_table_settings></tab_browse><tab_sql><sql name="SQL 1">-- Drop tables if they exist
+DROP TABLE IF EXISTS Customers;
+DROP TABLE IF EXISTS Products;
+DROP TABLE IF EXISTS Orders;
+DROP TABLE IF EXISTS OrderItems;
+DROP TABLE IF EXISTS Categories;
+DROP TABLE IF EXISTS Suppliers;
+
+-- Create tables
+CREATE TABLE Customers (
+    CustomerID INTEGER PRIMARY KEY AUTOINCREMENT,
+    Name TEXT NOT NULL,
+    Email TEXT UNIQUE,
+    Phone TEXT
+);
+
+CREATE TABLE Suppliers (
+    SupplierID INTEGER PRIMARY KEY AUTOINCREMENT,
+    Name TEXT NOT NULL,
+    ContactName TEXT,
+    Phone TEXT
+);
+
+CREATE TABLE Categories (
+    CategoryID INTEGER PRIMARY KEY AUTOINCREMENT,
+    CategoryName TEXT NOT NULL
+);
+
+CREATE TABLE Products (
+    ProductID INTEGER PRIMARY KEY AUTOINCREMENT,
+    ProductName TEXT NOT NULL,
+    CategoryID INTEGER,
+    SupplierID INTEGER,
+    Price REAL,
+    FOREIGN KEY (CategoryID) REFERENCES Categories(CategoryID),
+    FOREIGN KEY (SupplierID) REFERENCES Suppliers(SupplierID)
+);
+
+CREATE TABLE Orders (
+    OrderID INTEGER PRIMARY KEY AUTOINCREMENT,
+    CustomerID INTEGER,
+    OrderDate TEXT,
+    FOREIGN KEY (CustomerID) REFERENCES Customers(CustomerID)
+);
+
+CREATE TABLE OrderItems (
+    OrderItemID INTEGER PRIMARY KEY AUTOINCREMENT,
+    OrderID INTEGER,
+    ProductID INTEGER,
+    Quantity INTEGER,
+    FOREIGN KEY (OrderID) REFERENCES Orders(OrderID),
+    FOREIGN KEY (ProductID) REFERENCES Products(ProductID)
+);
+
+-- Insert sample data
+INSERT INTO Customers (Name, Email, Phone) VALUES
+('Alice Smith', 'alice@example.com', '555-1234'),
+('Bob Johnson', 'bob@example.com', '555-5678');
+
+INSERT INTO Suppliers (Name, ContactName, Phone) VALUES
+('Acme Corp', 'John Doe', '555-1111'),
+('Global Supplies', 'Jane Roe', '555-2222');
+
+INSERT INTO Categories (CategoryName) VALUES
+('Electronics'),
+('Books');
+
+INSERT INTO Products (ProductName, CategoryID, SupplierID, Price) VALUES
+('Laptop', 1, 1, 999.99),
+('Smartphone', 1, 2, 499.99),
+('Novel', 2, 2, 19.99);
+
+INSERT INTO Orders (CustomerID, OrderDate) VALUES
+(1, '2024-06-21'),
+(2, '2024-06-22');
+
+INSERT INTO OrderItems (OrderID, ProductID, Quantity) VALUES
+(1, 1, 1),
+(1, 3, 2),
+(2, 2, 1);
+
+-- Script ends here
+
+</sql><current_tab id="0"/></tab_sql></sqlb_project>
