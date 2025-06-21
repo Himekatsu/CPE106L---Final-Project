@@ -1,0 +1,19 @@
+Chinook (for Database Diagram); ChinookDB
+
+Download DB Browser for SQLite
+
+check blackboard, check screenshots
+
+SQLite (Tutorial)
+
+- Join
+- Select
+- Where
+
+> Create new directory, make Lab5 folder, open in VSCode "code ."
+> transfer chinook.db to LocalRepo Lab 5 folder
+> generate sqlite3 code o make use of the chinook.db and display the employees table
+		This prompt is entered on Copilot
+		
+> Take screenshot of the code, screenshot from Copilot, and commit change on GitHu with Name.
+
