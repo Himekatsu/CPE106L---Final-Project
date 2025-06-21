@@ -12,77 +12,70 @@ computerMove()
 import os, random
 import oxo_data
 
-def newGame():
-    ' return new empty game'
-    return list(" " * 9)
+class OxoGame:
+    def __init__(self, game=None):
+        if game and len(game) == 9:
+            self.game = game
+        else:
+            self.game = [" "] * 9
 
-def saveGame(game):
-    ' save game to disk '
-    oxo_data.saveGame(game)
-    
-def restoreGame():
-    ''' restore previously saved game.
-    If game not restored successfully return new game'''
-    try:
-        game = oxo_data.restoreGame()
-        if len(game) == 9:
-            return game
-        else: return newGame()
-    except IOError:
-        return newGame()
-    
-def _generateMove(game):
-    ''' generate a random cell from thiose available.
-        If all cells are used return -1'''
-    options = [i for i in range(len(game)) if  game[i] == " "]
-    if options:
-       return random.choice(options)
-    else: return -1
-    
-def _isWinningMove(game):
-    wins = ((0,1,2), (3,4,5), (6,7,8),
-            (0,3,6), (1,4,7), (2,5,8),
-            (0,4,8), (2,4,6))
+    @classmethod
+    def restore(cls):
+        try:
+            game = oxo_data.restoreGame()
+            return cls(game)
+        except IOError:
+            return cls()
 
-    for a,b,c in wins:
-        chars = game[a] + game[b] + game[c]
-        if chars == 'XXX' or chars == 'OOO':
-            return True
-    return False
+    def save(self):
+        oxo_data.saveGame(self.game)
 
-def userMove(game,cell):
-    if game[cell] != ' ':
-        raise ValueError('Invalid cell')
-    else:
-        game[cell] = 'X'
-    if _isWinningMove(game):
-        return 'X'
-    else:
-        return ""
+    def _generate_move(self):
+        options = [i for i, cell in enumerate(self.game) if cell == " "]
+        return random.choice(options) if options else -1
 
-def computerMove(game):
-    cell = _generateMove(game)
-    if cell == -1:
-        return 'D'
-    game[cell] = 'O'
-    if _isWinningMove(game):
-        return 'O'
-    else:
-        return ""
+    def _is_winning_move(self):
+        wins = ((0,1,2), (3,4,5), (6,7,8),
+                (0,3,6), (1,4,7), (2,5,8),
+                (0,4,8), (2,4,6))
+        for a, b, c in wins:
+            chars = self.game[a] + self.game[b] + self.game[c]
+            if chars == 'XXX' or chars == 'OOO':
+                return True
+        return False
+
+    def user_move(self, cell):
+        if self.game[cell] != ' ':
+            raise ValueError('Invalid cell')
+        self.game[cell] = 'X'
+        return 'X' if self._is_winning_move() else ""
+
+    def computer_move(self):
+        cell = self._generate_move()
+        if cell == -1:
+            return 'D'
+        self.game[cell] = 'O'
+        return 'O' if self._is_winning_move() else ""
+
+    def is_draw(self):
+        return " " not in self.game
+
+    def __str__(self):
+        return str(self.game)
 
 def test():
     result = ""
-    game = newGame()
+    game = OxoGame()
     while not result:
         print(game)
         try:
-           result = userMove(game, _generateMove(game))
+            result = game.user_move(game._generate_move())
         except ValueError:
             print("Oops, that shouldn't happen")
         if not result:
-            result = computerMove(game)
-            
-        if not result: continue
+            result = game.computer_move()
+        if not result:
+            continue
         elif result == 'D':
             print("Its a draw")
         else:
@@ -91,5 +84,3 @@ def test():
 
 if __name__ == "__main__":
     test()
-
-            
