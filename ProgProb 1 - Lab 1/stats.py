@@ -1,3 +1,13 @@
+def mode(numSet):
+    max = 0
+    mode = None
+    for num in numSet:
+        count = numSet.count(num)
+        if count > max:
+            max = count
+            mode = num
+    print("The mode is", mode)
+
 def median(numSet):
     numSet.sort()
     midpoint = len(numSet) // 2
@@ -6,7 +16,7 @@ def median(numSet):
         print(numSet[midpoint])
     else:
         print((numSet[midpoint] + numSet[midpoint - 1]) / 2)
-        
+
 def mean(numSet,A):
     total = sum(numSet)
     cout = len(numSet)
@@ -20,6 +30,8 @@ def main():
         x = int(input("Enter a number: "))
         numSet.append(x)
     mean(numSet, A)
+    median(numSet)
+    mode(numSet)
     
 
 if __name__ == "__main__":
