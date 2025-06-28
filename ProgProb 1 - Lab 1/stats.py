@@ -19,9 +19,8 @@ def median(numSet):
 
 def mean(numSet,A):
     total = sum(numSet)
-    cout = len(numSet)
-    ave = total / cout
-    print("The mean is", round(total, 2))
+    ave = total / A
+    print("The mean is", round(ave, 2))
 
 def main():
     numSet = []
