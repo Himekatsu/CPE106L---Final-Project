@@ -1,3 +1,12 @@
+def median(numSet):
+    numSet.sort()
+    midpoint = len(numSet) // 2
+    print("The median is", end=" ")
+    if len(numSet) % 2 == 1:
+        print(numSet[midpoint])
+    else:
+        print((numSet[midpoint] + numSet[midpoint - 1]) / 2)
+        
 def mean(numSet,A):
     total = sum(numSet)
     cout = len(numSet)
