@@ -10,7 +10,7 @@ def main():
     for i in range (0,A,1):
         x = int(input("Enter a number: "))
         numSet.append(x)
-    mean
+    mean(numSet, A)
     
 
 if __name__ == "__main__":
