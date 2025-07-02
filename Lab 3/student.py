@@ -37,14 +37,36 @@ class Student(object):
         """Returns the string representation of the student."""
         return "Name: " + self.name  + "\nScores: " + \
                " ".join(map(str, self.scores))
+    def __init__(self, name):
+        self.name = name
+
+    def __eq__(self, other):
+        if isinstance(other, Student):
+            return self.name == other.name
+        return NotImplemented
+
+    def __lt__(self, other):
+        if isinstance(other, Student):
+            return self.name < other.name
+        return NotImplemented
+
+    def __ge__(self, other):
+        if isinstance(other, Student):
+            return self.name >= other.name
+        return NotImplemented
 
 def main():
-    """A simple test."""
-    student = Student("Ken", 5)
-    print(student)
-    for i in range(1, 6):
-        student.setScore(i, 100)
-    print(student)
+    s1 = Student("Alice")
+    s2 = Student("Bob")
+    s3 = Student("Alice")
+
+    print(f"s1 == s2: {s1 == s2}")   # False
+    print(f"s1 == s3: {s1 == s3}")   # True
+    print(f"s1 < s2: {s1 < s2}")     # True
+    print(f"s2 < s1: {s2 < s1}")     # False
+    print(f"s1 >= s2: {s1 >= s2}")   # False
+    print(f"s2 >= s1: {s2 >= s1}")   # True
+    print(f"s1 >= s3: {s1 >= s3}")   # True
 
 if __name__ == "__main__":
     main()
