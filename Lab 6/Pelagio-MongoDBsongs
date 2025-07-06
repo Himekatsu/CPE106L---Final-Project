@@ -1,4 +1,3 @@
-from xmlrpc import client
 from pymongo import MongoClient
 
 import pprint
