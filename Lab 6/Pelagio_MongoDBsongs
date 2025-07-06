@@ -1,0 +1,20 @@
+from pymongo import MongoClient
+
+import pprint
+import re
+
+# client = MongoClient(host="localhost", port=27017)
+client = MongoClient("mongodb://localhost:27017/")
+
+# Get reference to 'chinook' database
+db = client["Lab6Act"]
+
+# Get a reference to the 'customers' collection
+tracks_collection = db["tracks"]
+# print(customers_collection)
+
+#print first document
+doc1 = tracks_collection.find_one()
+print(doc1)
+
+client.close()
