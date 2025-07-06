@@ -1,0 +1,77 @@
+[
+    {
+        "idx": "IFK_TrackMediaTypeId",
+        "stat": "3503 701",
+        "tbl": "tracks"
+    },
+    {
+        "idx": "IFK_TrackGenreId",
+        "stat": "3503 141",
+        "tbl": "tracks"
+    },
+    {
+        "idx": "IFK_TrackAlbumId",
+        "stat": "3503 11",
+        "tbl": "tracks"
+    },
+    {
+        "idx": "IFK_PlaylistTrackTrackId",
+        "stat": "8715 3",
+        "tbl": "playlist_track"
+    },
+    {
+        "idx": "sqlite_autoindex_playlist_track_1",
+        "stat": "8715 623 1",
+        "tbl": "playlist_track"
+    },
+    {
+        "idx": "IFK_AlbumArtistId",
+        "stat": "347 2",
+        "tbl": "albums"
+    },
+    {
+        "idx": null,
+        "stat": "275",
+        "tbl": "artists"
+    },
+    {
+        "idx": "IFK_CustomerSupportRepId",
+        "stat": "59 20",
+        "tbl": "customers"
+    },
+    {
+        "idx": null,
+        "stat": "18",
+        "tbl": "playlists"
+    },
+    {
+        "idx": "IFK_EmployeeReportsTo",
+        "stat": "8 2",
+        "tbl": "employees"
+    },
+    {
+        "idx": null,
+        "stat": "25",
+        "tbl": "genres"
+    },
+    {
+        "idx": "IFK_InvoiceCustomerId",
+        "stat": "412 7",
+        "tbl": "invoices"
+    },
+    {
+        "idx": null,
+        "stat": "5",
+        "tbl": "media_types"
+    },
+    {
+        "idx": "IFK_InvoiceLineTrackId",
+        "stat": "2240 2",
+        "tbl": "invoice_items"
+    },
+    {
+        "idx": "IFK_InvoiceLineInvoiceId",
+        "stat": "2240 6",
+        "tbl": "invoice_items"
+    }
+]
