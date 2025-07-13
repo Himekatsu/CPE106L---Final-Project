@@ -1,13 +1,13 @@
-from Project import Comms, Notifs
-
+from Comms import CommunicationInterface
+from Notifs import MessageNotification
 
 if __name__ == "__main__":
     # Create a communication interface
-    comm_interface = Comms()
+    comm_interface = CommunicationInterface()
 
     # Create message notification instances
-    user1 = Notifs.MessageNotification("User 1")
-    user2 = Notifs.MessageNotification("User 2")
+    user1 = MessageNotification("User 1")
+    user2 = MessageNotification("User 2")
 
     # Subscribe users to the communication interface
     comm_interface.subscribe(user1)
