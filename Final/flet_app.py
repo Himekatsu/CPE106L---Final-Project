@@ -17,15 +17,101 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
+
+class Notification:
+    
+    def __init__(self, title, message, timestamp=None):
+        self.title = title
+        self.message = message
+        self.timestamp = timestamp or datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+    def display(self):
+        return f"[{self.timestamp}] {self.title}: {self.message}"
+
+class Feedback:
+    
+    def __init__(self):
+        self.responses = []
+
+    def collect_feedback(self, response):
+        self.responses.append(response)
+
+    def analyze_feedback(self):
+        if not self.responses:
+            return "No feedback collected."
+        return {
+            "total_responses": len(self.responses),
+            "positive": sum(1 for r in self.responses if r.lower() in ["good", "great", "excellent"]),
+            "negative": sum(1 for r in self.responses if r.lower() in ["bad", "poor", "terrible"]),
+            "all_responses": self.responses
+        }
+
+class Survey:
+    
+    def __init__(self, questions):
+        self.questions = questions
+        self.responses = []
+
+    def add_response(self, response_list):
+        if len(response_list) == len(self.questions):
+            self.responses.append(dict(zip(self.questions, response_list)))
+
+    def display_results(self):
+        return self.responses
+
+class Assignment:
+    
+    def __init__(self, title, description, due_date):
+        self.title = title
+        self.description = description
+        self.due_date = due_date
+
+    def get_details(self):
+        return {"title": self.title, "description": self.description, "due_date": self.due_date}
+
+    def __str__(self):
+        return f"Assignment: {self.title}, Due: {self.due_date}"
+
+class ProgressTracker:
+    
+    def __init__(self):
+        self.progress_data = {}
+
+    def update_progress(self, assignment_title, progress):
+        self.progress_data[assignment_title] = int(progress)
+
+    def generate_progress_chart_base64(self):
+        if not self.progress_data:
+            return None
+        titles = list(self.progress_data.keys())
+        progress_values = list(self.progress_data.values())
+        fig, ax = plt.subplots()
+        ax.bar(titles, progress_values, color='skyblue')
+        ax.set_xlabel('Assignments')
+        ax.set_ylabel('Progress (%)')
+        ax.set_title('Assignment Progress')
+        ax.set_ylim(0, 100)
+        plt.xticks(rotation=45, ha="right")
+        plt.tight_layout()
+        buf = BytesIO()
+        fig.savefig(buf, format="png")
+        plt.close(fig)
+        return base64.b64encode(buf.getvalue()).decode("ascii")
+
+
+
+
 DATABASE_URL = "sqlite:///./LetsInglesD.db"
 engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
+
 user_skill_association = Table('user_skill', Base.metadata,
     Column('user_id', Integer, ForeignKey('users.id')),
     Column('skill_id', Integer, ForeignKey('skills.id'))
 )
+
 
 class User(Base):
     __tablename__ = "users"
@@ -86,6 +172,7 @@ def get_db():
     finally:
         db.close()
 
+# Pydantic Models for API
 class UserCreate(BaseModel):
     username: str
     password: str
@@ -108,11 +195,13 @@ class MessageRead(BaseModel):
     receiver_username: str
     content: str
     timestamp: datetime
-
     class Config:
         orm_mode = True
 
+
+
 def populate_database_from_json(db: Session):
+    
     if db.query(User).first() is not None: return
     geolocator = Nominatim(user_agent="skill-share-app-seeder")
     try:
@@ -154,7 +243,9 @@ def populate_database_from_json(db: Session):
                 db.commit()
     except (FileNotFoundError, json.JSONDecodeError): pass
 
+
 def find_best_match(request: Request, db: Session):
+    
     required_skill = request.skill
     if not (request.requester.latitude and request.requester.longitude): return None
     requester_loc = (request.requester.latitude, request.requester.longitude)
@@ -168,7 +259,9 @@ def find_best_match(request: Request, db: Session):
     scored_volunteers.sort(key=lambda x: x[1])
     return scored_volunteers[0][0] if scored_volunteers else None
 
+
 def generate_skill_demand_chart_base64(db: Session):
+    
     skill_requests = db.query(Skill.name, func.count(Request.id)).join(Request, Skill.id == Request.skill_id).group_by(Skill.name).all()
     if not skill_requests: return None
     skills, counts = zip(*skill_requests)
@@ -178,10 +271,13 @@ def generate_skill_demand_chart_base64(db: Session):
     buf = BytesIO(); fig.savefig(buf, format="png"); plt.close(fig)
     return base64.b64encode(buf.getvalue()).decode("ascii")
 
+
+
 app = FastAPI()
 
 @app.post("/users/", status_code=201)
 def create_user(user: UserCreate, db: Session = Depends(get_db)):
+    
     geolocator = Nominatim(user_agent="skill-share-app")
     lat, lon = None, None
     try:
@@ -198,6 +294,7 @@ def create_user(user: UserCreate, db: Session = Depends(get_db)):
 
 @app.post("/requests/", status_code=201)
 def create_request(request: RequestCreate, db: Session = Depends(get_db)):
+   
     requester = db.query(User).filter(User.username == request.requester_username).first()
     skill = db.query(Skill).filter(Skill.name == request.skill_name.lower()).first()
     if not requester or not skill: raise HTTPException(status_code=404, detail="Requester or skill not found")
@@ -212,20 +309,25 @@ def create_request(request: RequestCreate, db: Session = Depends(get_db)):
 
 @app.get("/users/{username}", response_model=Optional[UserCreate])
 def get_user(username: str, db: Session = Depends(get_db)):
+    
     user = db.query(User).filter(User.username == username).first()
     if user: return UserCreate(username=user.username, password=user.password, address=user.address, availability=user.availability, skills=[skill.name for skill in user.skills])
     else: raise HTTPException(status_code=404, detail="User not found")
 
+
 @app.put("/users/{username}", response_model=dict)
 def update_user(username: str, user_update: UserCreate, db: Session = Depends(get_db)):
+    
     db_user = db.query(User).filter(User.username == username).first()
     if not db_user: raise HTTPException(status_code=404, detail="User not found")
     db_user.address = user_update.address; db_user.availability = user_update.availability
     db.commit()
     return {"message": "User updated successfully"}
 
+
 @app.post("/messages/", response_model=MessageRead)
 def send_message(message: MessageCreate, db: Session = Depends(get_db)):
+    
     sender = db.query(User).filter(User.username == message.sender_username).first()
     receiver = db.query(User).filter(User.username == message.receiver_username).first()
     if not sender or not receiver: raise HTTPException(status_code=404, detail="Sender or receiver not found")
@@ -235,6 +337,7 @@ def send_message(message: MessageCreate, db: Session = Depends(get_db)):
 
 @app.get("/users/{username}/messages/", response_model=List[MessageRead])
 def get_messages(username: str, db: Session = Depends(get_db)):
+    
     user = db.query(User).filter(User.username == username).first()
     if not user: raise HTTPException(status_code=404, detail="User not found")
     sent = [MessageRead.from_orm(m) for m in user.messages_sent]
@@ -242,12 +345,26 @@ def get_messages(username: str, db: Session = Depends(get_db)):
     all_messages = sorted(sent + received, key=lambda m: m.timestamp)
     return all_messages
 
+
+
+
 def flet_main(page: ft.Page):
-    page.title = "Community Skill Share & Messaging"
+    page.title = "Community Skill Share & Learning Platform"
     page.theme_mode = ft.ThemeMode.LIGHT
     page.padding = 20
-    page.window_width = 700
-    page.window_height = 800
+    page.window_width = 800
+    page.window_height = 900
+
+    
+    feedback_handler = Feedback()
+    assignment_handler = Assignment("Initial Assignment", "Complete the setup", "2025-12-31")
+    progress_tracker = ProgressTracker()
+    notification_handler = Notification("System", "Welcome to the platform!")
+    survey = Survey(questions=["How was your onboarding experience?", "What feature do you want to see next?"])
+    
+    
+    progress_tracker.update_progress("Project Setup", 100)
+    progress_tracker.update_progress("UI Design", 75)
 
     def get_main_view(username):
         db = SessionLocal()
@@ -255,6 +372,7 @@ def flet_main(page: ft.Page):
             user = db.query(User).filter(User.username == username).first()
             if not user: return ft.Column([ft.Text("User not found.")])
 
+           
             my_requests = db.query(Request).filter(Request.requester_id == user.id, Request.status == 'open').all()
             requests_list = ft.ListView(spacing=10, padding=10, auto_scroll=True)
             for req in my_requests: requests_list.controls.append(ft.Text(f"- {req.skill.name.capitalize()}: {req.description}"))
@@ -274,6 +392,7 @@ def flet_main(page: ft.Page):
                 ], spacing=15, scroll=ft.ScrollMode.AUTO, horizontal_alignment=ft.CrossAxisAlignment.CENTER
             )
 
+            
             messages_view = ft.ListView(expand=True, spacing=10, auto_scroll=True)
             receiver_input = ft.TextField(label="Recipient Username", width=400)
             content_input = ft.TextField(label="Your Message...", expand=True)
@@ -319,6 +438,77 @@ def flet_main(page: ft.Page):
                 ],
                 expand=True
             )
+            
+            
+            assignment_title_input = ft.TextField(label="Assignment Title", value=assignment_handler.title)
+            assignment_progress_input = ft.TextField(label="Progress %", value="75")
+            progress_chart_img = ft.Image(src_base64=progress_tracker.generate_progress_chart_base64())
+
+            def update_progress_click(e):
+                progress_tracker.update_progress(assignment_title_input.value, assignment_progress_input.value)
+                progress_chart_img.src_base64 = progress_tracker.generate_progress_chart_base64()
+                page.snack_bar = ft.SnackBar(ft.Text("Progress Updated!"), bgcolor=ft.Colors.GREEN_200)
+                page.snack_bar.open = True
+                page.update()
+
+            progress_view = ft.Column(
+                [
+                    ft.Text("Assignments & Progress", size=18),
+                    ft.Text(str(assignment_handler)),
+                    assignment_title_input,
+                    assignment_progress_input,
+                    ft.ElevatedButton("Update Progress", on_click=update_progress_click),
+                    ft.Divider(),
+                    ft.Text("Progress Overview"),
+                    progress_chart_img,
+                ], spacing=15, horizontal_alignment=ft.CrossAxisAlignment.CENTER
+            )
+
+            
+            feedback_input = ft.TextField(label="Your feedback (e.g., 'good', 'bad')", width=400)
+            feedback_summary_text = ft.Text()
+            
+            survey_q1 = ft.TextField(label=survey.questions[0])
+            survey_q2 = ft.TextField(label=survey.questions[1])
+            survey_responses_view = ft.Column()
+
+            def submit_feedback_click(e):
+                feedback_handler.collect_feedback(feedback_input.value)
+                summary = feedback_handler.analyze_feedback()
+                feedback_summary_text.value = f"Feedback Summary: {summary}"
+                feedback_input.value = ""
+                page.update()
+
+            def submit_survey_click(e):
+                survey.add_response([survey_q1.value, survey_q2.value])
+                survey_responses_view.controls.append(ft.Text(f"New Survey Response: {survey.responses[-1]}"))
+                survey_q1.value, survey_q2.value = "", ""
+                page.update()
+
+            feedback_view = ft.Column(
+                [
+                    ft.Text("Submit Feedback", size=16),
+                    feedback_input,
+                    ft.ElevatedButton("Submit Feedback", on_click=submit_feedback_click),
+                    feedback_summary_text,
+                    ft.Divider(),
+                    ft.Text("Community Survey", size=16),
+                    survey_q1, survey_q2,
+                    ft.ElevatedButton("Submit Survey", on_click=submit_survey_click),
+                    ft.Text("Submitted Surveys:"),
+                    survey_responses_view,
+                ], spacing=10
+            )
+
+            
+            notifications_list_view = ft.ListView(spacing=10, auto_scroll=True)
+            notifications_list_view.controls.append(ft.Text(notification_handler.display()))
+            
+            notifications_view = ft.Column([
+                ft.Text("Notifications", size=18),
+                ft.Container(notifications_list_view, border=ft.border.all(1), padding=10, height=200)
+            ])
+
 
             return ft.Column([
                 ft.Text(f"Welcome, {username}!", size=24, weight=ft.FontWeight.BOLD),
@@ -327,6 +517,9 @@ def flet_main(page: ft.Page):
                     tabs=[
                         ft.Tab(text="Dashboard", content=dashboard_view),
                         ft.Tab(text="Messages", content=messaging_view),
+                        ft.Tab(text="Assignments", content=progress_view),
+                        ft.Tab(text="Feedback", content=feedback_view),
+                        ft.Tab(text="Notifications", content=notifications_view),
                     ],
                     expand=True,
                 )
@@ -376,15 +569,18 @@ def flet_main(page: ft.Page):
             page.snack_bar.open = True; page.update()
         finally: db.close()
 
+    
     login_username = ft.TextField(label="Username", width=300)
     login_password = ft.TextField(label="Password", password=True, width=300)
     login_view = ft.Column([ft.Text("Login", size=30), login_username, login_password, ft.Row([ft.ElevatedButton("Login", on_click=login_click), ft.TextButton("Register here", on_click=lambda e: show_view(register_view))], alignment=ft.MainAxisAlignment.CENTER)], horizontal_alignment=ft.CrossAxisAlignment.CENTER, spacing=20)
+    
     reg_username = ft.TextField(label="Username", width=300)
     reg_password = ft.TextField(label="Password", password=True, width=300)
     reg_address = ft.TextField(label="City/Address (e.g., 'San Francisco, CA')", width=300)
     reg_availability_dd = ft.Dropdown(label="Availability", width=300, options=[ft.dropdown.Option("Weekdays"), ft.dropdown.Option("Weekends"), ft.dropdown.Option("Flexible")])
     reg_skills = ft.TextField(label="Skills (comma-separated)", width=300)
     register_view = ft.Column([ft.Text("Register", size=30), reg_username, reg_password, reg_address, reg_availability_dd, reg_skills, ft.Row([ft.ElevatedButton("Register", on_click=register_click), ft.TextButton("Back to Login", on_click=lambda e: show_view(login_view))], alignment=ft.MainAxisAlignment.CENTER)], horizontal_alignment=ft.CrossAxisAlignment.CENTER, spacing=20)
+    
     request_skill_field = ft.TextField(label="Skill needed", width=400)
     request_desc_field = ft.TextField(label="Brief description", width=400)
 
@@ -395,14 +591,25 @@ def flet_main(page: ft.Page):
 
     show_view(login_view)
 
+
 def run_fastapi():
+    
     uvicorn.run(app, host="127.0.0.1", port=8000, log_level="info")
 
 if __name__ == "__main__":
+    
     Base.metadata.create_all(bind=engine)
+    
+    
     db = SessionLocal()
-    try: populate_database_from_json(db)
-    finally: db.close()
+    try:
+        populate_database_from_json(db)
+    finally:
+        db.close()
+        
+    
     fastapi_thread = threading.Thread(target=run_fastapi, daemon=True)
     fastapi_thread.start()
+    
+    
     ft.app(target=flet_main)
