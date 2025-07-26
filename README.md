@@ -18,8 +18,8 @@ A Community-Oriented Language Proficiency Tutoring Program
 Use Git to clone the project:
 
 ```bash
-git clone https://github.com/Himekatsu/CPE106L---Final-Project.git
-cd CPE106L---Final-Project
+git clone https://github.com/Himekatsu/G1-LetsIngles.git
+cd G1-LetsIngles
 ```
 
 ### 2. Create a Virtual Environment
@@ -42,6 +42,11 @@ source venv/bin/activate
 ```
 
 ### 3. Install Dependencies
+Ensure that you're in the project directory and have activated the virtual environment.
+
+```bash
+pip install -r requirements.txt
+```
 
 ### 4. Run the App via Terminal
 Ensure that you're in the project directory and have activated the virtual environment.
