@@ -42,3 +42,18 @@ source venv/bin/activate
 ```
 
 ### 3. Install Dependencies
+
+### 4. Run the App via Terminal
+Ensure that you're in the project directory and have activated the virtual environment.
+
+For Windows Systems,
+
+```bash
+python main.py
+```
+
+For Linux Systems,
+
+```bash
+python3 main.py
+```
