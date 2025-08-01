@@ -79,3 +79,29 @@ class MatchingService:
         proximity_score = max(0, 100 * (1 - (distance / max_dist)))
         
         return proximity_score
+
+    def find_best_match(self, req_skills, preferred_level=None):
+        # Get all instructors with the required skill
+        instructors = self.user_model.get_all_instructors()
+        best_matches = []
+        for instructor in instructors:
+            skills = self.user_model.get_instructor_skills(instructor['userId'])
+            level = instructor.get('teachingLevel')
+            if req_skills in skills and (preferred_level is None or level == preferred_level):
+                best_matches.append(instructor)
+        # You can add more sophisticated ranking here (e.g., availability, rating)
+        return best_matches
+
+    def match_request(self, request_id):
+        # Fetch the request details
+        request = self.request_model.get_by_id(request_id)
+        req_skills = request['reqSkills']
+        preferred_level = request.get('preferredLevel')
+        matches = self.find_best_match(req_skills, preferred_level)
+        if matches:
+            # Assign the first available instructor (or use your own logic)
+            assigned_instructor = matches[0]
+            # Update session/request tables as needed
+            # ...
+            return assigned_instructor
+        return None

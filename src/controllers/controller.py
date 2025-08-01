@@ -1,14 +1,14 @@
 # controllers/controller.py
 from services.matching_service import MatchingService
+from services.map_service import MapService
 import time
 
 class Controller:
-    """
-    Main application controller. It handles UI events and interacts with the model.
-    """
+    """Main application controller. It handles UI events and interacts with the model."""
     def __init__(self, models):
         self.models = models
         self.matching_service = MatchingService(models['user'], models['request'])
+        self.map_service = MapService()
         self.view = None
         self.current_user = None
 
@@ -17,18 +17,13 @@ class Controller:
 
     # --- Splash Screen and Login/Register Logic ---
     def handle_login(self, username, password):
-        """Handles the complete login flow with validation and loading screen."""
         if not username or not password:
             self.view.show_error_dialog("Username and password cannot be empty.")
             return
-
         self.view.show_loading_dialog(True)
-        time.sleep(1) 
-        
+        time.sleep(1)
         user = self.models['user'].authenticate(username, password)
-        
         self.view.show_loading_dialog(False)
-
         if user:
             self.current_user = user
             if user['userRole'] == 'admin': self.view.page.go("/admin")
@@ -36,9 +31,8 @@ class Controller:
             else: self.view.page.go("/learner")
         else:
             self.view.show_error_dialog("Login failed. Please check your username and password.")
-    
+
     def handle_register(self, role, first_name, last_name, middle_initial, username, email, password, verify_password, consent, resume_path=None):
-        """Handles the complete registration flow with validation."""
         if not all([first_name, last_name, username, email, password, verify_password]):
             self.view.show_error_dialog("Please fill in all required fields.")
             return
@@ -65,7 +59,6 @@ class Controller:
             self.view.show_error_dialog(f"Registration failed: {user_id}")
 
     def check_username_availability(self, username):
-        """Checks if a username is taken and provides feedback."""
         if not username: return
         if self.models['user'].check_username(username):
             self.view.show_snackbar(f"Username '{username}' is not available.")
@@ -73,7 +66,6 @@ class Controller:
             self.view.show_snackbar(f"Username '{username}' is available!", "green")
 
     def reset_splash_view(self):
-        """Resets the splash screen UI to its initial state."""
         self.view._toggle_form('initial')
 
     def handle_logout(self):
@@ -86,12 +78,10 @@ class Controller:
 
     def get_all_skills(self):
         return self.models['skill'].get_all()
-
-    # --- Learner Data ---
+        
     def get_learner_assignments_with_status(self):
         all_assignments = self.models['assignment'].get_all()
         submitted_ids = self.models['assignment'].get_submissions_by_learner(self.current_user['userId'])
-        
         assignments_with_status = []
         for assign in all_assignments:
             assignment_dict = dict(assign)
@@ -99,12 +89,6 @@ class Controller:
             assignments_with_status.append(assignment_dict)
         return assignments_with_status
 
-    # --- Instructor Data ---
-    def get_all_users_for_messaging(self):
-        """Gets all users except the current one for messaging purposes."""
-        return self.models['user'].get_all_users_except(self.current_user['userId'])
-
-    # --- Messaging Data ---
     def get_conversation_partners(self):
         return self.models['message'].get_conversation_partners(self.current_user['userId'])
 
@@ -125,7 +109,6 @@ class Controller:
         if not all([skill_id, title, description, due_date]):
             self.view.show_error_dialog("All assignment fields are required.")
             return False
-        
         assignment_id = self.models['assignment'].create(self.current_user['userId'], skill_id, title, description, due_date)
         if isinstance(assignment_id, int):
             self.view.show_snackbar("Assignment created successfully!", "green")
@@ -137,7 +120,7 @@ class Controller:
     def handle_submit_assignment(self, assignment_id):
         if self.models['assignment'].submit(assignment_id, self.current_user['userId']):
             self.view.show_snackbar("Assignment submitted!", "green")
-            self.view.page.go("/learner") # Refresh the view
+            self.view.page.go("/learner")
         else:
             self.view.show_error_dialog("Failed to submit assignment.")
 
@@ -146,10 +129,13 @@ class Controller:
         if not content:
             self.view.show_snackbar("Message content cannot be empty.")
             return False
-        
         message_id = self.models['message'].create(self.current_user['userId'], receiver_id, content)
-        if isinstance(message_id, int):
-            return True # Let the view handle the UI update
+        return isinstance(message_id, int)
+
+    # --- Map Action ---
+    def show_user_location_on_map(self, lat, lon):
+        if lat and lon:
+            map_file = self.map_service.generate_map(lat, lon)
+            self.view.show_map_dialog(map_file)
         else:
-            self.view.show_snackbar("Failed to send message.")
-            return False
+            self.view.show_error_dialog("Location data is not available for this user.")

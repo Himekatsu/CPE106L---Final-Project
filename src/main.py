@@ -15,7 +15,6 @@ from models.user import User
 from models.skill import Skill
 from models.request import Request
 from models.session import Session
-from models.learner_stats import LearnerStats
 from models.practice_material import PracticeMaterial
 from models.feedback import Feedback
 from models.profile import Profile
@@ -24,9 +23,7 @@ from models.message import Message
 from views.view import View
 
 def main(page: ft.Page):
-    """
-    The main function to initialize and run the Flet application.
-    """
+    """The main function to initialize and run the Flet application."""
     page.title = "Let's Ingles - English Proficiency Program"
     page.window_width = 1200
     page.window_height = 800
@@ -48,16 +45,10 @@ def main(page: ft.Page):
         db = Database(db_file=db_path)
         
         models = {
-            "user": User(db),
-            "skill": Skill(db),
-            "request": Request(db),
-            "session": Session(db),
-            "learner_stats": LearnerStats(db),
-            "practice_material": PracticeMaterial(db),
-            "feedback": Feedback(db),
-            "profile": Profile(db),
-            "assignment": Assignment(db),
-            "message": Message(db)
+            "user": User(db), "skill": Skill(db), "request": Request(db),
+            "session": Session(db), "practice_material": PracticeMaterial(db),
+            "feedback": Feedback(db), "profile": Profile(db),
+            "assignment": Assignment(db), "message": Message(db)
         }
     except FileNotFoundError as e:
         page.add(ft.Text(f"Error: {e}", color="red"))
@@ -75,27 +66,19 @@ def main(page: ft.Page):
         
         if page.route == "/":
             page.views.append(view.get_splash_view())
-        elif page.route == "/login":
-            # This route is now handled by the splash screen logic
-            page.go("/")
-        elif page.route.startswith("/register"):
-             # This route is now handled by the splash screen logic
-            page.go("/")
         elif page.route == "/learner":
-            if controller.current_user:
-                page.views.append(view.get_learner_view())
-            else:
-                page.go("/")
+            if controller.current_user: page.views.append(view.get_learner_view())
+            else: page.go("/")
         elif page.route == "/instructor":
-            if controller.current_user:
-                page.views.append(view.get_instructor_view())
-            else:
-                page.go("/")
+            if controller.current_user: page.views.append(view.get_instructor_view())
+            else: page.go("/")
         elif page.route == "/admin":
             if controller.current_user and controller.current_user['userRole'] == 'admin':
                 page.views.append(view.get_admin_view())
-            else:
-                page.go("/")
+            else: page.go("/")
+        else:
+            # Fallback to splash screen for any other route (like /login)
+            page.views.append(view.get_splash_view())
         
         page.update()
 
@@ -110,4 +93,3 @@ def main(page: ft.Page):
 
 if __name__ == "__main__":
     ft.app(target=main, assets_dir="src/assets")
-

@@ -2,6 +2,7 @@
 import flet as ft
 import shutil
 import os
+import time # Import the standard time library
 
 # --- App Theme & Style (Dark Theme) ---
 C_BACKGROUND = "#1A202C"
@@ -72,6 +73,15 @@ class View:
         self.dialog.open = True
         self.page.update()
 
+    def show_map_dialog(self, map_file):
+        # This assumes Flet supports WebView (if not, you can open the file externally)
+        webview = ft.WebView(src=map_file, width=800, height=600)
+        self.dialog.title = ft.Text("User Location Map")
+        self.dialog.content = webview
+        self.dialog.actions = [ft.TextButton("Close", on_click=lambda _: self._close_dialog())]
+        self.dialog.open = True
+        self.page.update()
+
     def _close_dialog(self):
         self.dialog.open = False
         self.page.update()
@@ -117,7 +127,8 @@ class View:
             source_file = e.files[0].path
             resumes_dir = os.path.join("assets", "resumes")
             os.makedirs(resumes_dir, exist_ok=True)
-            unique_filename = f"{int(ft.time.time_ns())}-{os.path.basename(source_file)}"
+            # FIX: Use Python's time module instead of flet's
+            unique_filename = f"{int(time.time_ns())}-{os.path.basename(source_file)}"
             destination_file = os.path.join(resumes_dir, unique_filename)
             shutil.copy(source_file, destination_file)
             relative_path = os.path.join("assets", "resumes", unique_filename).replace("\\", "/")
