@@ -1,11 +1,13 @@
 {
   "ExpandedNodes": [
     "",
+    "\\assets",
     "\\controllers",
     "\\core",
     "\\db",
     "\\models",
     "\\services",
+    "\\tester",
     "\\views"
   ],
   "PreviewInSolutionExplorer": false

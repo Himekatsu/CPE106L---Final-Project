@@ -4,11 +4,13 @@ import os
 import sys
 
 # --- Path Setup ---
+# This allows importing from sibling directories (models, views, controllers)
 src_dir = os.path.dirname(os.path.abspath(__file__))
 if src_dir not in sys.path:
     sys.path.insert(0, src_dir)
 
 # --- Component Imports ---
+import config
 from controllers.controller import Controller
 from models.database import Database
 from models.user import User
@@ -20,29 +22,20 @@ from models.feedback import Feedback
 from models.profile import Profile
 from models.assignment import Assignment
 from models.message import Message
-from views.view import View
+from view import View
 
 def main(page: ft.Page):
     """The main function to initialize and run the Flet application."""
-    page.title = "Let's Ingles - English Proficiency Program"
-    page.window_width = 1200
-    page.window_height = 800
+    # --- Page Configuration ---
+    page.title = config.PAGE_TITLE
+    page.window_width = config.WINDOW_WIDTH
+    page.window_height = config.WINDOW_HEIGHT
     page.padding = 20
-    
-    page.floating_action_button = ft.FloatingActionButton(
-        icon=ft.Icons.EXIT_TO_APP,
-        on_click=lambda _: page.window_close(),
-        tooltip="Exit Application",
-        bgcolor=ft.Colors.RED_400
-    )
-    
-    assets_dir = os.path.join(src_dir, "assets")
-    page.assets_dir = assets_dir
 
     # --- Database and Model Initialization ---
     try:
-        db_path = os.path.join(src_dir, "db", "LetsInglesDB.db")
-        db = Database(db_file=db_path)
+        # The database path is now managed by config.py
+        db = Database(db_file=config.DB_PATH)
         
         models = {
             "user": User(db), "skill": Skill(db), "request": Request(db),
@@ -50,8 +43,10 @@ def main(page: ft.Page):
             "feedback": Feedback(db), "profile": Profile(db),
             "assignment": Assignment(db), "message": Message(db)
         }
-    except FileNotFoundError as e:
-        page.add(ft.Text(f"Error: {e}", color="red"))
+    except Exception as e:
+        # Display a more user-friendly error on the page
+        page.add(ft.Text(f"Database initialization failed: {e}", color="red"))
+        page.add(ft.Text(f"Please ensure the database file is located at: {config.DB_PATH}", color="yellow"))
         return
 
     # --- MVC Initialization ---
@@ -63,24 +58,32 @@ def main(page: ft.Page):
     # --- Routing Logic ---
     def route_change(route):
         page.views.clear()
-        
+
+        # Determine the current user's role for routing
+        user_role = controller.current_user['userRole'] if controller.current_user else None
+
+        valid_route = False
         if page.route == "/":
             page.views.append(view.get_splash_view())
-        elif page.route == "/learner":
-            if controller.current_user: page.views.append(view.get_learner_view())
-            else: page.go("/")
-        elif page.route == "/instructor":
-            if controller.current_user: page.views.append(view.get_instructor_view())
-            else: page.go("/")
-        elif page.route == "/admin":
-            if controller.current_user and controller.current_user['userRole'] == 'admin':
-                page.views.append(view.get_admin_view())
-            else: page.go("/")
+            valid_route = True
+        elif page.route == "/learner" and user_role == 'learner':
+            page.views.append(view.get_learner_view())
+            valid_route = True
+        elif page.route == "/instructor" and user_role == 'instructor':
+            page.views.append(view.get_instructor_view())
+            valid_route = True
+        elif page.route == "/admin" and user_role == 'admin':
+            page.views.append(view.get_admin_view())
+            valid_route = True
+
+        if not valid_route:
+            # If the route was not valid for any reason, go to the home page.
+            # This will re-trigger route_change, which will then match "/"
+            # and display the splash screen correctly.
+            page.go("/")
         else:
-            # Fallback to splash screen for any other route (like /login)
-            page.views.append(view.get_splash_view())
-        
-        page.update()
+            # Only update the page if we have determined the route is valid.
+            page.update()
 
     def view_pop(e):
         page.views.pop()
@@ -92,4 +95,5 @@ def main(page: ft.Page):
     page.go("/")
 
 if __name__ == "__main__":
-    ft.app(target=main, assets_dir="src/assets")
+    # The assets_dir is now set on the page object, so it's not needed here
+    ft.app(target=main, assets_dir=config.ASSETS_DIR)
