@@ -3,3 +3,4 @@ uvicorn[standard]
 flet
 matplotlib
 googlemaps
+folium

@@ -62,10 +62,10 @@ class Controller:
         
         if isinstance(user_id, int):
             profile_data = {
-                "firstName": first_name, 
-                "lastName": last_name, 
-                "middleInitial": middle_initial, 
-                "resumePath": resume_path
+                "first_name": first_name, 
+                "last_name": last_name, 
+                "middle_initial": middle_initial, 
+                "resume_path": resume_path
             }
             self.models['profile'].create_or_update(user_id, profile_data)
             self.view.show_success_dialog("Account successfully created!")
@@ -87,6 +87,37 @@ class Controller:
     def handle_logout(self):
         self.current_user = None
         self.view.page.go("/")
+
+    # --- Matchmaking Actions ---
+    def handle_find_match_for_learner(self, request_data):
+        """
+        Uses the MatchingService to find the best instructor for a learner's request.
+        """
+        if not self.matching_service:
+            self.view.show_error_dialog("Matching service is not available.")
+            return None
+            
+        best_instructor = self.matching_service.find_best_match_for_request(request_data)
+        return best_instructor
+
+    def get_pending_requests_for_instructor(self):
+        """
+        Fetches all requests that have been assigned to the current instructor
+        but have not yet been accepted or declined.
+        """
+        # In a real implementation, you would fetch this from self.models['request']
+        # For example: return self.models['request'].get_pending_by_instructor_id(self.current_user['userId'])
+        
+        # For now, returning placeholder data for UI demonstration:
+        return [
+            {'id': 1, 'learner_name': 'John Doe', 'requestDay': 'Monday', 'reqSkills': '1,5'},
+            {'id': 2, 'learner_name': 'Jane Smith', 'requestDay': 'Wednesday', 'reqSkills': '3'},
+        ]
+
+    def handle_request_response(self, request_id, response):
+        """Updates the status of a request to 'accepted' or 'declined'."""
+        # In a real implementation, you would update the model: self.models['request'].update_status(request_id, response)
+        print(f"Updating request {request_id} to {response}")
 
     # --- Data Fetching for Views ---
     def get_user_profile(self):

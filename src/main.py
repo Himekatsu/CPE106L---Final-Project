@@ -22,7 +22,7 @@ from models.feedback import Feedback
 from models.profile import Profile
 from models.assignment import Assignment
 from models.message import Message
-from view import View
+from views.view import View
 
 def main(page: ft.Page):
     """The main function to initialize and run the Flet application."""

@@ -58,10 +58,9 @@ class MatchingService:
             return -1
 
         # 2. Availability Check (Essential)
-        try:
-            request_date = datetime.strptime(request['requestDate'], "%Y-%m-%d")
-            request_day_of_week = request_date.strftime('%A')
-        except (ValueError, TypeError):
+        # The request now provides the day of the week directly.
+        request_day_of_week = request.get('requestDay')
+        if not request_day_of_week:
             return -1
 
         instructor_availability = self.user_model.get_instructor_availability(instructor['userId'])
