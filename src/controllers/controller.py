@@ -37,6 +37,7 @@ class Controller:
                 self.view.page.go("/instructor")
             else:
                 self.view.page.go("/learner")
+            self.view.page.update()
         else:
             self.view.show_error_dialog("Login failed. Please check your username and password.")
 
@@ -88,16 +89,81 @@ class Controller:
         self.current_user = None
         self.view.page.go("/")
 
+    def handle_find_instructor(self, selected_skills, day):
+        """Handles the learner's request to find an instructor."""
+        if not self.current_user:
+            self.view.show_error_dialog("You must be logged in to find an instructor.")
+            return
+
+        if not selected_skills or not day:
+            self.view.show_error_dialog("Please select at least one skill and a preferred day.")
+            return
+
+        # Convert set of skill IDs to a comma-separated string
+        skills_str = ",".join(map(str, selected_skills))
+        
+        # Create the request in the database
+        request_id = self.models['request'].create(
+            user_id=self.current_user['userId'],
+            req_skills=skills_str,
+            request_day=day
+        )
+
+        if isinstance(request_id, int):
+            self.view.show_loading_dialog(True)
+            # Run the matching process immediately after the request is created
+            self.handle_run_matching(single_request_id=request_id)
+            self.view.show_loading_dialog(False)
+        else:
+            self.view.show_error_dialog(f"Failed to create your request: {request_id}")
+
     # --- Matchmaking Actions ---
-    def handle_find_match_for_learner(self, request_data):
+    def handle_run_matching(self, single_request_id=None):
         """
-        Uses the MatchingService to find the best instructor for a learner's request.
+        Runs the greedy matching algorithm.
+        If single_request_id is provided, it only matches that specific request.
+        Otherwise, it matches all pending requests.
+        """
+        if not self.matching_service:
+            self.view.show_error_dialog("Matching service is not available.")
+            return
+
+        print("Running matchmaking process...")
+        matches = self.matching_service.match_requests(single_request_id)
+        
+        if not matches:
+            self.view.show_snackbar("Could not find a suitable instructor at this time. Please try again later.", "orange")
+            return
+
+        # Assign the instructors to the requests in the database
+        for match in matches:
+            req_id = match['request']['reqId']
+            inst_id = match['instructor']['userId']
+            self.models['request'].assign_instructor(req_id, inst_id)
+
+        # Show appropriate feedback to the user
+        if single_request_id:
+            self.view.show_success_dialog("We've found a potential match! The instructor has been notified. You will be able to schedule a session once they accept.")
+        else:
+            self.view.show_success_dialog(f"Matchmaking complete! Found {len(matches)} new pairs.")
+        
+        print(f"Found {len(matches)} matches:")
+        for match in matches:
+            print(f"  - Request {match['request']['reqId']} matched with Instructor {match['instructor']['userId']}")
+
+    def handle_find_match_for_request(self, request_data):
+        """
+        Uses the MatchingService to find the best instructor for a single, specific request.
+        This is useful for on-demand matching for a new request.
         """
         if not self.matching_service:
             self.view.show_error_dialog("Matching service is not available.")
             return None
             
-        best_instructor = self.matching_service.find_best_match_for_request(request_data)
+        # We need all instructors for a single request match
+        all_instructors = self.models['user'].get_all_instructors()
+        best_instructor, score = self.matching_service._find_best_instructor_for_request(request_data, all_instructors)
+        
         return best_instructor
 
     def get_pending_requests_for_instructor(self):
@@ -105,19 +171,18 @@ class Controller:
         Fetches all requests that have been assigned to the current instructor
         but have not yet been accepted or declined.
         """
-        # In a real implementation, you would fetch this from self.models['request']
-        # For example: return self.models['request'].get_pending_by_instructor_id(self.current_user['userId'])
-        
-        # For now, returning placeholder data for UI demonstration:
-        return [
-            {'id': 1, 'learner_name': 'John Doe', 'requestDay': 'Monday', 'reqSkills': '1,5'},
-            {'id': 2, 'learner_name': 'Jane Smith', 'requestDay': 'Wednesday', 'reqSkills': '3'},
-        ]
+        if not self.current_user:
+            return []
+        return self.models['request'].get_pending_for_instructor(self.current_user['userId'])
 
     def handle_request_response(self, request_id, response):
-        """Updates the status of a request to 'accepted' or 'declined'."""
-        # In a real implementation, you would update the model: self.models['request'].update_status(request_id, response)
-        print(f"Updating request {request_id} to {response}")
+        """Updates the status of a request to 'accepted' or 'declined' and refreshes the view."""
+        if self.models['request'].update_status(request_id, response):
+            self.view.show_snackbar(f"Request has been {response}.", "green")
+            # Refresh the content of the instructor dashboard
+            self.view.page.go("/instructor") # This re-triggers the view creation
+        else:
+            self.view.show_error_dialog("Failed to update the request status.")
 
     # --- Data Fetching for Views ---
     def get_user_profile(self):

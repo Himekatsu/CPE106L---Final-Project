@@ -93,7 +93,7 @@ class View:
         self.page.update()
 
     def _close_dialog(self):
-        self.dialog.open = False
+        self.page.close(self.dialog)
         self.page.update()
 
     def _close_dialog_and_reset_splash(self):
@@ -337,7 +337,41 @@ class View:
 
     def get_admin_view(self):
         self._setup_page()
-        return ft.View("/admin", [self._build_header("Admin Dashboard")])
+        
+        # --- UI Controls ---
+        run_matching_button = ft.ElevatedButton(
+            text="Run Matching Algorithm",
+            icon=ft.Icons.GROUP_ADD,
+            on_click=lambda _: self.controller.handle_run_matching(),
+            bgcolor=config.C_PRIMARY,
+            color="white",
+            height=50,
+            tooltip="Find matches for all pending learner requests."
+        )
+
+        # --- View Layout ---
+        content = ft.Column(
+            [
+                ft.Text("Admin Controls", size=24, weight=ft.FontWeight.BOLD, color=config.C_ACCENT),
+                ft.Text("Use the tools below to manage the application.", opacity=0.8),
+                ft.Divider(),
+                run_matching_button,
+                # You can add more admin controls here in the future
+            ],
+            spacing=20,
+            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+            alignment=ft.MainAxisAlignment.CENTER,
+            expand=True
+        )
+
+        return ft.View(
+            "/admin", 
+            [
+                self._build_header("Admin Dashboard"),
+                ft.Container(content=content, expand=True, padding=40)
+            ],
+            padding=0
+        )
 
     def _build_learner_matchmaking_content(self):
         """Builds the UI for the learner's matchmaking/find instructor page."""
@@ -383,8 +417,11 @@ class View:
         results_area = ft.Column(spacing=10, horizontal_alignment=ft.CrossAxisAlignment.CENTER)
 
         def find_match_click(e):
-            """This function is a placeholder for future implementation and currently does nothing."""
-            pass
+            """Calls the controller to find an instructor based on selected criteria."""
+            self.controller.handle_find_instructor(
+                selected_skills=selected_skills,
+                day=day_dropdown.value
+            )
 
         return ft.Column(
             [
@@ -393,8 +430,9 @@ class View:
                 ft.Divider(),
                 ft.Text("1. Select Required Skills", weight=ft.FontWeight.BOLD),
                 skill_chips,
-                day_dropdown,
                 ft.Container(height=10),
+                day_dropdown,
+                ft.Container(height=20),
                 ft.ElevatedButton("Find Match", on_click=find_match_click, icon=ft.Icons.SEARCH, bgcolor=config.C_PRIMARY, color="white", width=200, height=40),
                 ft.Divider(),
                 results_area
@@ -407,34 +445,43 @@ class View:
 
     def _build_instructor_matchmaking_content(self):
         """Builds the UI for the instructor to view and respond to requests."""
-        
-        # --- CONTROLLER INTERACTION ---
-        # You will need to create this method in your controller.
-        # It should fetch all pending requests for the current instructor.
         pending_requests = self.controller.get_pending_requests_for_instructor()
+        all_skills_dict = {skill['skillId']: skill['skillName'] for skill in self.controller.get_all_skills()}
 
         if not pending_requests:
-            return ft.Column([ft.Text("No pending matchmaking requests.", size=18)], alignment=ft.MainAxisAlignment.CENTER, horizontal_alignment=ft.CrossAxisAlignment.CENTER, expand=True)
+            return ft.Column([
+                ft.Text("No pending matchmaking requests.", size=18, opacity=0.7)
+            ], alignment=ft.MainAxisAlignment.CENTER, horizontal_alignment=ft.CrossAxisAlignment.CENTER, expand=True)
 
-        def handle_response(request_id, response):
-            # This will call the controller to update the request status
-            self.controller.handle_request_response(request_id, response)
-            self.show_snackbar(f"Request has been {response}.", "green")
-            # Here you would ideally refresh the list
+        def handle_response_click(e, request_id, response):
+            def on_confirm(e_inner):
+                self.controller.handle_request_response(request_id, response)
+            
+            self.show_confirmation_dialog(
+                title=f"Confirm {response.capitalize()}",
+                message=f"Are you sure you want to {response} this request?",
+                on_confirm=on_confirm
+            )
+
+        def get_skill_names(skill_ids_str):
+            if not skill_ids_str: return "N/A"
+            return ", ".join([all_skills_dict.get(int(id), "Unknown Skill") for id in skill_ids_str.split(',')])
 
         request_cards = [
             ft.Card(
+                elevation=4,
                 content=ft.Container(
                     padding=15,
+                    border_radius=10,
                     content=ft.Row(
                         [
                             ft.Column([
-                                ft.Text(f"Request from: {req.get('learner_name', 'Unknown Learner')}"),
-                                ft.Text(f"Preferred Day: {req.get('requestDay', 'N/A')}", opacity=0.7),
-                                ft.Text(f"Required Skills: {req.get('reqSkills', 'N/A')}", opacity=0.7),
+                                ft.Text(f"Request from: {req.get('learner_name', 'Unknown')}", weight=ft.FontWeight.BOLD),
+                                ft.Text(f"Preferred Day: {req.get('requestDay', 'N/A')}", opacity=0.9),
+                                ft.Text(f"Required Skills: {get_skill_names(req.get('reqSkills'))}", opacity=0.7, italic=True),
                             ], expand=True),
-                            ft.ElevatedButton("Accept", on_click=lambda _, r_id=req['id']: handle_response(r_id, "accepted"), bgcolor=config.SUCCESS_COLOR, color="white"),
-                            ft.ElevatedButton("Decline", on_click=lambda _, r_id=req['id']: handle_response(r_id, "declined"), bgcolor=config.ERROR_COLOR, color="white"),
+                            ft.ElevatedButton("Accept", on_click=lambda e, r_id=req['reqId']: handle_response_click(e, r_id, "accepted"), bgcolor=config.SUCCESS_COLOR, color="white"),
+                            ft.ElevatedButton("Decline", on_click=lambda e, r_id=req['reqId']: handle_response_click(e, r_id, "declined"), bgcolor=config.ERROR_COLOR, color="white"),
                         ],
                         alignment=ft.MainAxisAlignment.SPACE_BETWEEN
                     )
@@ -445,9 +492,13 @@ class View:
         return ft.Column(
             [
                 ft.Text("Pending Learner Requests", size=22, weight=ft.FontWeight.BOLD, color=config.C_ACCENT),
+                ft.Text("Accept a request to open a direct message channel and schedule a session.", opacity=0.8),
+                ft.Divider(height=20),
                 ft.ListView(controls=request_cards, expand=True, spacing=10)
             ],
-            expand=True
+            expand=True,
+            scroll=ft.ScrollMode.ADAPTIVE,
+            padding=ft.padding.symmetric(horizontal=30)
         )
 
     def _build_header(self, title):

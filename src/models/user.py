@@ -31,6 +31,9 @@ class User:
     def authenticate(self, user_name, password):
         """Authenticates a user by checking username and hashed password."""
         user = self.get_by_username(user_name)
+        if user:
+            print(f"Stored Hashed Pass: {user['userPass']}")
+            print(f"Input Hashed Pass: {self._hash_password(password)}")
         if user and user['userPass'] == self._hash_password(password):
             return user
         return None
@@ -71,5 +74,7 @@ class User:
         """Gets the skill IDs for a specific instructor."""
         sql = "SELECT skillID FROM instructor_skills WHERE instructorID = ?"
         with self.db.connect() as conn:
+            conn.row_factory = sqlite3.Row
             cursor = conn.cursor()
+            cursor.execute(sql, (instructor_id,))
             return [row['skillID'] for row in cursor.fetchall()]

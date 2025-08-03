@@ -29,25 +29,6 @@ class MatchingService:
         r = 6371 # Radius of earth in kilometers.
         return c * r
 
-    def find_best_match_for_request(self, request):
-        """Finds the single best instructor for a given request."""
-        all_instructors = self.user_model.get_all_instructors()
-        best_instructor = None
-        best_score = -1
-
-        try:
-            required_skills = set(map(int, request['reqSkills'].split(',')))
-        except (ValueError, AttributeError):
-            return None # Skip request if skills are malformed
-
-        for instructor in all_instructors:
-            score = self._calculate_match_score(request, required_skills, instructor)
-            if score > best_score:
-                best_score = score
-                best_instructor = instructor
-        
-        return best_instructor
-
     def _calculate_match_score(self, request, required_skills, instructor):
         """
         Calculates a compatibility score. Higher is better. Returns -1 if incompatible.
@@ -79,28 +60,53 @@ class MatchingService:
         
         return proximity_score
 
-    def find_best_match(self, req_skills, preferred_level=None):
-        # Get all instructors with the required skill
-        instructors = self.user_model.get_all_instructors()
-        best_matches = []
-        for instructor in instructors:
-            skills = self.user_model.get_instructor_skills(instructor['userId'])
-            level = instructor.get('teachingLevel')
-            if req_skills in skills and (preferred_level is None or level == preferred_level):
-                best_matches.append(instructor)
-        # You can add more sophisticated ranking here (e.g., availability, rating)
-        return best_matches
+    def _find_best_instructor_for_request(self, request, available_instructors):
+        """Finds the single best instructor for a given request from a list of available instructors."""
+        best_instructor = None
+        best_score = -1
 
-    def match_request(self, request_id):
-        # Fetch the request details
-        request = self.request_model.get_by_id(request_id)
-        req_skills = request['reqSkills']
-        preferred_level = request.get('preferredLevel')
-        matches = self.find_best_match(req_skills, preferred_level)
-        if matches:
-            # Assign the first available instructor (or use your own logic)
-            assigned_instructor = matches[0]
-            # Update session/request tables as needed
-            # ...
-            return assigned_instructor
-        return None
+        try:
+            required_skills = set(map(int, request['reqSkills'].split(',')))
+        except (ValueError, AttributeError):
+            return None, -1 # Skip request if skills are malformed
+
+        for instructor in available_instructors:
+            score = self._calculate_match_score(request, required_skills, instructor)
+            if score > best_score:
+                best_score = score
+                best_instructor = instructor
+        
+        return best_instructor, best_score
+
+    def match_requests(self, single_request_id=None):
+        """
+        Matches requests with the best available instructors using a greedy approach.
+        If a specific request ID is given, it only matches that one.
+        """
+        if single_request_id:
+            # To match a single request, we need a way to fetch it by ID.
+            # Let's add a get_by_id method to the Request model.
+            # For now, we'll filter the full pending list.
+            all_pending = self.request_model.get_pending()
+            requests_to_process = [r for r in all_pending if r['reqId'] == single_request_id]
+        else:
+            requests_to_process = self.request_model.get_pending()
+
+        available_instructors = self.user_model.get_all_instructors()
+        if not available_instructors:
+            return [] # No instructors to match with
+
+        matches = []
+        for request in requests_to_process:
+            best_instructor, best_score = self._find_best_instructor_for_request(request, available_instructors)
+            
+            if best_instructor:
+                matches.append({
+                    'request': request,
+                    'instructor': best_instructor,
+                    'score': best_score
+                })
+                # This instructor is now assigned and cannot be matched again in this run.
+                available_instructors.remove(best_instructor)
+        
+        return matches
