@@ -54,11 +54,11 @@ Ensure that you're in the project directory and have activated the virtual envir
 For Windows Systems,
 
 ```bash
-python main.py
+python src/main.py
 ```
 
 For Linux Systems,
 
 ```bash
-python3 main.py
+python3 src/main.py
 ```
